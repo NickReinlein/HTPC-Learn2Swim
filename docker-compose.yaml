@@ -1,0 +1,38 @@
+#########################################
+##                                      #
+##        Learn2Swim HTPC Docker        #
+##                                      #
+#################################################
+##                                              #
+## Configuration is read from the .env file     #
+## Ensure the .env file is in this folder       #
+##                                              #
+#################################################
+
+version: '1'
+
+services:
+  # ----------------------------------------
+  # READARR
+  # Book Management
+  # ----------------------------------------
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-file: '${LOG_FILE_NUM}'
+        max-size: '${LOG_FILE_SIZE}'
+    ports:
+      - '${READARR_PORT}:8787'
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - '${SYNOLOGY_BASE_DOCKER_PATH}/readarr:/config'
+      - '${TORRENTS_PATH}/Completed:/data/Completed'
+      - '${MEDIA_BASE_PATH}/Books:/books'
+      - '/etc/localtime:/etc/localtime:ro'
