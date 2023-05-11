@@ -19,7 +19,13 @@ services:
   readarr:
     image: lscr.io/linuxserver/readarr:develop
     container_name: readarr
-    restart: unless-stopped
+    restart: always
+    env_file:
+      - settings.env
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
     logging:
       driver: 'json-file'
       options:
@@ -27,11 +33,7 @@ services:
         max-size: '${LOG_FILE_SIZE}'
     ports:
       # - '${READARR_PORT}:8787'
-      - '8789:8789'
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
+      - '8989:8787'
     # volumes:
     #   - '${SYNOLOGY_BASE_DOCKER_PATH}/readarr:/config'
     #   - '${TORRENTS_PATH}/Completed:/data/Completed'
