@@ -9,7 +9,7 @@
 ##                                              #
 #################################################
 
-version: '1'
+version: '3.5'
 
 services:
   # ----------------------------------------
@@ -26,13 +26,14 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     ports:
-      - '${READARR_PORT}:8787'
+      # - '${READARR_PORT}:8787'
+      - '8789:8789'
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
-    volumes:
-      - '${SYNOLOGY_BASE_DOCKER_PATH}/readarr:/config'
-      - '${TORRENTS_PATH}/Completed:/data/Completed'
-      - '${MEDIA_BASE_PATH}/Books:/books'
-      - '/etc/localtime:/etc/localtime:ro'
+    # volumes:
+    #   - '${SYNOLOGY_BASE_DOCKER_PATH}/readarr:/config'
+    #   - '${TORRENTS_PATH}/Completed:/data/Completed'
+    #   - '${MEDIA_BASE_PATH}/Books:/books'
+    #   - '/etc/localtime:/etc/localtime:ro'
