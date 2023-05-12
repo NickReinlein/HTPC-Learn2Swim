@@ -120,19 +120,80 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${TORRENTS_PATH}/completed:/data/completed'''
+      - '${TORRENTS_PATH}/completed:/data/completed'
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${MEDIA_BASE_PATH}/kids/movies:/kids/movies'
       - '/etc/localtime:/etc/localtime:ro'
-  # #PLEX-SERVER: Media management & distribution service
-  # plex-server:
-  #   container_name: plex-server
-  #   image: plexinc/pms-docker:latest
-  #   env_file: .env
-  #   environment:
-  #     - TZ=${TZ}
-  #   network_mode: host
-  #   volumes:
-  #     - ${ROOT}/config/plex/db:/config # plex database
-  #     - ${ROOT}/config/plex/transcode:/transcode # temp transcoded files
-  #     - '${MEDIA_BASE_PATH}/:/'
+
+  #PLEX-SERVER: Media management & distribution service
+  plex-server:
+    container_name: plex-server
+    image: plexinc/pms-docker:latest
+    env_file: .env
+    environment:
+      - TZ=${TZ}
+    ports:
+      - '${PLEX_PORT}:7878'
+    volumes:
+      - '${CONFIG_PATH}/:/config'
+      - '${TRANSCODE_PATH}:/transcode'
+      - '${MEDIA_BASE_PATH}/:/media'
+
+  # DELUGEVPN: Deluge Torrent Client + VPN
+  arch-delugevpn:
+    image: binhex/arch-delugevpn
+    container_name: delugevpn
+    restart: unless-stopped
+    env_file: .env
+    logging:
+      driver: 'json-file'
+      options:
+        max-file: '${LOG_FILE_NUM}'
+        max-size: '${LOG_FILE_SIZE}'
+    ports:
+      - '${DELUGE_PORT}:8112'
+      - '8118:8118'
+      - '58846:58846'
+      - '58946:58946'
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - VPN_ENABLED=yes
+      - VPN_USER=${VPNUNAME}
+      - VPN_PASS=${VPNPASS}
+      - VPN_REMOTE=${VPN_REMOTE}
+      - VPN_PORT=1198
+      - VPN_PROTOCOL=udp
+      - VPN_DEVICE_TYPE=tun
+      - VPN_PROV=${VPNPROVIDER}
+      - STRONG_CERTS=no
+      - ENABLE_PRIVOXY=yes
+      - STRICT_PORT_FORWARD=yes
+      - LAN_NETWORK=${CIDR_ADDRESS}
+      - NAME_SERVERS=37.235.1.174,8.8.8.8,37.235.1.177,8.8.4.4
+      - DEBUG=false
+    volumes:
+      - '${TORRENTS_PATH}/:/torrents'
+      - '/etc/localtime:/etc/localtime:ro'
+
+  # TAUTULLI: Monitoring Service for PLEX Usage
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-file: '${LOG_FILE_NUM}'
+        max-size: '${LOG_FILE_SIZE}'
+    ports:
+      - '${TAUTULLI_PORT}:8181'
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - '/etc/localtime:/etc/localtime:ro'
