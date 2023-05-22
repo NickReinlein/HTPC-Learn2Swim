@@ -23,7 +23,7 @@ services:
       - VERSION=docker
       # - PLEX_CLAIM= #optional
     volumes:
-      - '${CONFIG_PATH}:/config'
+      - '${CONFIG_PATH}/plex:/config'
       - '${MEDIA_BASE_PATH}/tv:/tv'
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${MEDIA_BASE_PATH}/books:/books'
@@ -65,7 +65,7 @@ services:
       - DELUGE_ENABLE_WEBUI_PASSWORD=no #remove later
     volumes:
       - '${TORRENTS_PATH}:/data'
-      - '${CONFIG_PATH}:/config'
+      - '${CONFIG_PATH}/deluge:/config'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
       - '${DELUGE_PORT}:8112'
@@ -137,12 +137,11 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${CONFIG_PATH}:/config'
+      - '${CONFIG_PATH}/sonarr:/config'
       - '${MEDIA_BASE_PATH}/tv:/tv'
       - '${MEDIA_BASE_PATH}/new:/downloads'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
-      - 8989:8989
       - '${SONARR_PORT}:8989'
     restart: unless-stopped
 
@@ -161,7 +160,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${CONFIG_PATH}:/config'
+      - '${CONFIG_PATH}/radarr:/config'
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${MEDIA_BASE_PATH}/new:/downloads'
       - '/etc/localtime:/etc/localtime:ro'
@@ -183,7 +182,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${CONFIG_PATH}:/config'
+      - '${CONFIG_PATH}/tautulli:/config'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
       - '${TAUTULLI_PORT}:8181'
