@@ -35,14 +35,11 @@ services:
       - VERSION=docker
       - PLEX_CLAIM= #optional
     volumes:
-      - '${MEDIA_BASE_PATH}/:/config'
+      - '${CONFIG_PATH}/:/config'
       - '${MEDIA_BASE_PATH}/tv/:/tv'
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${MEDIA_BASE_PATH}/books:/books'
-      - '${MEDIA_BASE_PATH}/kids/movies:/kids/movies'
-      - '${MEDIA_BASE_PATH}/kids/tv:/kids/tv'
-
-  # DELUGEVPN: Deluge Torrent Client + VPN
+      # DELUGEVPN: Deluge Torrent Client + VPN
   deluge:
     image: binhex/arch-delugevpn
     container_name: deluge
@@ -58,8 +55,8 @@ services:
       - '8118:8118'
       - '58846:58846'
       - '58946:58946'
-    expose:
-      - 8112
+    # expose:
+    #   - 8112
     cap_add:
       - NET_ADMIN
     environment:
@@ -82,8 +79,9 @@ services:
       - DEBUG=true
       - DELUGE_DAEMON_LOG_LEVEL=debug
       - DELUGE_WEB_LOG_LEVEL=debug
+      - DELUGE_ENABLE_WEBUI_PASSWORD=no #remove later
     volumes:
-      - '${TORRENTS_PATH}/:/torrents'
+      - '${TORRENTS_PATH}/:/data'
       - '${CONFIG_PATH}/:/config'
       - '/etc/localtime:/etc/localtime:ro'
 
@@ -154,7 +152,6 @@ services:
     volumes:
       - '${TORRENTS_PATH}/completed:/torrents/completed'
       - '${MEDIA_BASE_PATH}/tv:/tv'
-      - '${MEDIA_BASE_PATH}/kids/tv:/kids/tv'
       - '/etc/localtime:/etc/localtime:ro'
 
   # RADARR: Movie Management
@@ -174,9 +171,8 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${TORRENTS_PATH}/completed:/torrents/completed'
+      - '${CONFIG_PATH}/:/config'
       - '${MEDIA_BASE_PATH}/movies:/movies'
-      - '${MEDIA_BASE_PATH}/kids/movies:/kids/movies'
       - '/etc/localtime:/etc/localtime:ro'
 
   # TAUTULLI: Monitoring Service for PLEX Usage
@@ -197,7 +193,7 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
     volumes:
-      - '${MEDIA_BASE_PATH}/:/config'
+      - '${CONFIG_PATH}/:/config'
       - '/etc/localtime:/etc/localtime:ro'
 
   # ORGANIZR: Web Frontend for Management
