@@ -35,7 +35,7 @@ services:
       - '${MEDIA_BASE_PATH}/books:/books'
       - '${TRANSCODE_PATH}/plex:/transcode'
     ports:
-      - 32400:32400
+      - '${PLEX_PORT}:32400'
       - 32410:32410/udp
       - 32412:32412/udp
       - 32413:32413/udp
@@ -108,7 +108,7 @@ services:
     volumes:
       - '${CONFIG_PATH}/readarr:/config'
       - '${MEDIA_BASE_PATH}/books:/books'
-      - '${MEDIA_BASE_PATH}/new:/downloads'
+      - '${NEW_MEDIA_PATH}:/downloads'
       - /etc/localtime:/etc/localtime:ro
     ports:
       - '${READARR_PORT}:8787'
@@ -129,15 +129,15 @@ services:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
-      - PASSWORD=${CALIBRE_AUTH}
+      - PASSWORD=${CALIBRE_AUTH_PASSWORD}
     volumes:
-      - '${MEDIA_BASE_PATH}/new:/downloads'
+      - '${NEW_MEDIA_PATH}:/downloads'
       - '${MEDIA_BASE_PATH}/books:/books'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
-      - '${CALIBRE_PORT}:8080'
-      - '${CALIBRE_PORT2}:8181'
-      - 8081:8081 # remove later?
+      - '${CALIBRE_HTTP_PORT}:8080'
+      - '${CALIBRE_HTTPS_PORT}:8181'
+      - '${CALIBRE_WEBSERVER_PORT}:8081'
     restart: unless-stopped
 
   # SONARR: TV Series Management
@@ -157,7 +157,7 @@ services:
     volumes:
       - '${CONFIG_PATH}/sonarr:/config'
       - '${MEDIA_BASE_PATH}/tv:/tv'
-      - '${MEDIA_BASE_PATH}/new:/downloads'
+      - '${NEW_MEDIA_PATH}:/downloads'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
       - '${SONARR_PORT}:8989'
@@ -180,7 +180,7 @@ services:
     volumes:
       - '${CONFIG_PATH}/radarr:/config'
       - '${MEDIA_BASE_PATH}/movies:/movies'
-      - '${MEDIA_BASE_PATH}/new:/downloads'
+      - '${NEW_MEDIA_PATH}:/downloads'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
       - '${RADARR_PORT}:7878'
