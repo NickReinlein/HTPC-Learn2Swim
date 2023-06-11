@@ -91,7 +91,7 @@ services:
       - '${TORRENT_COMPLETE_PATH}:/complete'
       - '${TORRENT_FILE_PATH}:/torrents'
       - '/etc/localtime:/etc/localtime:ro'
-    network_mode: "bridge"
+    # network_mode: "bridge"
     cap_add:
       - NET_ADMIN
     ports:
