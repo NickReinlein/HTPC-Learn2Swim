@@ -73,7 +73,7 @@ services:
       - VPN_PROTOCOL=udp
       - VPN_DEVICE_TYPE=tun
       - VPN_PORT=${DELUGEVPN_VPN_PORT}
-      - VPN_INPUT_PORTS=1234
+      # - VPN_INPUT_PORTS=1234
       # - VPN_OUTPUT_PORTS=5678
       - STRICT_PORT_FORWARD=no
       - ENABLE_PRIVOXY=no
@@ -95,10 +95,10 @@ services:
     cap_add:
       - NET_ADMIN
     ports:
-      - '${IP_ADDRESS}:${DELUGEVPN_WEBUI_PORT}:8112'
-      - '${IP_ADDRESS}:8118:8118'
-      - '${IP_ADDRESS}:58846:58846'
-      - '${IP_ADDRESS}:58946:58946'
+      - '${DELUGEVPN_WEBUI_PORT}:8112'
+      - '8118:8118'
+      - '58846:58846'
+      - '58946:58946'
     restart: unless-stopped
 
   # RADARR: Movie Management
@@ -121,9 +121,8 @@ services:
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${TORRENT_COMPLETE_PATH}:/new'
       - '/etc/localtime:/etc/localtime:ro'
-    network_mode: "bridge"
     ports:
-      - '${IP_ADDRESS}:${RADARR_PORT}:7878'
+      - '${RADARR_PORT}:7878'
     restart: unless-stopped
 
   # SONARR: TV Series Management
