@@ -9,7 +9,7 @@
 ##                                              #
 #################################################
 
-version: "3.5"
+version: '3.5'
 
 services:
   #PLEX: Media management & distribution service
@@ -26,14 +26,16 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=${UMASK}
       - VERSION=docker
       - PLEX_CLAIM= #optional
     volumes:
       - '${CONFIG_PATH}/plex:/config'
+      - '${TRANSCODE_PATH}/plex:/transcode'
+      - '${TORRENT_COMPLETE_PATH}:/new'
       - '${MEDIA_BASE_PATH}/tv:/tv'
       - '${MEDIA_BASE_PATH}/movies:/movies'
       - '${MEDIA_BASE_PATH}/books:/books'
-      - '${TRANSCODE_PATH}/plex:/transcode'
     ports:
       - '${PLEX_PORT}:32400'
       - 32410:32410/udp
@@ -49,118 +51,54 @@ services:
 
   # DELUGEVPN: Deluge Torrent Client + VPN
   deluge:
-    image: binhex/arch-delugevpn
-    container_name: deluge
+    image: binhex/arch-delugevpn:latest
+    container_name: delugevpn
     env_file: .env
     logging:
       driver: 'json-file'
       options:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
-    cap_add:
-      - NET_ADMIN
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
-      - VPN_ENABLED=no
+      - UMASK=${UMASK}
+      - VPN_ENABLED=yes
       - VPN_USER=${VPNUNAME}
       - VPN_PASS=${VPNPASS}
+      - VPN_PROV=${VPNPROVIDER}
       - VPN_REMOTE=${VPN_REMOTE}
-      - VPN_PORT=1198
+      - VPN_CLIENT=openvpn
       - VPN_PROTOCOL=udp
       - VPN_DEVICE_TYPE=tun
-      - VPN_PROV=${VPNPROVIDER}
+      - VPN_PORT=${DELUGEVPN_VPN_PORT}
+      - VPN_INPUT_PORTS=1234
+      # - VPN_OUTPUT_PORTS=5678
+      - STRICT_PORT_FORWARD=no
+      - ENABLE_PRIVOXY=no
       - STRONG_CERTS=no
-      - ENABLE_PRIVOXY=yes
-      - STRICT_PORT_FORWARD=yes
       - LAN_NETWORK=${CIDR_ADDRESS}
-      - NAME_SERVERS=37.235.1.174,8.8.8.8,37.235.1.177,8.8.4.4
+      - NAME_SERVERS=84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40
       - DEBUG=true
-      - DELUGE_DAEMON_LOG_LEVEL=debug
-      - DELUGE_WEB_LOG_LEVEL=debug
+      - DELUGE_DAEMON_LOG_LEVEL=trace
+      - DELUGE_WEB_LOG_LEVEL=trace
       - DELUGE_ENABLE_WEBUI_PASSWORD=no #remove later
     volumes:
-      - '${CONFIG_PATH}/deluge:/config'
-      - '${TORRENTS_PATH}:/data'
+      - '${CONFIG_PATH}/delugevpn:/config'
+      - '${TORRENT_BASE_PATH}:/data'
+      - '${TORRENT_INCOMPLETE_PATH}:/incomplete'
+      - '${TORRENT_COMPLETE_PATH}:/complete'
+      - '${TORRENT_FILE_PATH}:/torrents'
       - '/etc/localtime:/etc/localtime:ro'
+    network_mode: "bridge"
+    cap_add:
+      - NET_ADMIN
     ports:
-      - '${DELUGE_PORT}:8112'
-      - '8118:8118'
-      - '58846:58846'
-      - '58946:58946'
-    restart: unless-stopped
-
-  # READARR: Book Management
-  readarr:
-    container_name: readarr
-    image: lscr.io/linuxserver/readarr:develop
-    env_file: .env
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
-    logging:
-      driver: 'json-file'
-      options:
-        max-file: '${LOG_FILE_NUM}'
-        max-size: '${LOG_FILE_SIZE}'
-    volumes:
-      - '${CONFIG_PATH}/readarr:/config'
-      - '${MEDIA_BASE_PATH}/books:/books'
-      - '${NEW_MEDIA_PATH}:/downloads'
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - '${READARR_PORT}:8787'
-    restart: unless-stopped
-
-  # CALIBRE: Book Interface
-  calibre:
-    image: lscr.io/linuxserver/calibre:latest
-    container_name: calibre
-    security_opt:
-      - seccomp:unconfined #optional
-    logging:
-      driver: 'json-file'
-      options:
-        max-file: '${LOG_FILE_NUM}'
-        max-size: '${LOG_FILE_SIZE}'
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - PASSWORD=${CALIBRE_AUTH_PASSWORD}
-    volumes:
-      - '${NEW_MEDIA_PATH}:/downloads'
-      - '${MEDIA_BASE_PATH}/books:/books'
-      - '/etc/localtime:/etc/localtime:ro'
-    ports:
-      - '${CALIBRE_HTTP_PORT}:8080'
-      - '${CALIBRE_HTTPS_PORT}:8181'
-      - '${CALIBRE_WEBSERVER_PORT}:8081'
-    restart: unless-stopped
-
-  # SONARR: TV Series Management
-  sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
-    env_file: .env
-    logging:
-      driver: 'json-file'
-      options:
-        max-file: '${LOG_FILE_NUM}'
-        max-size: '${LOG_FILE_SIZE}'
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
-    volumes:
-      - '${CONFIG_PATH}/sonarr:/config'
-      - '${MEDIA_BASE_PATH}/tv:/tv'
-      - '${NEW_MEDIA_PATH}:/downloads'
-      - '/etc/localtime:/etc/localtime:ro'
-    ports:
-      - '${SONARR_PORT}:8989'
+      - '${IP_ADDRESS}:${DELUGEVPN_WEBUI_PORT}:8112'
+      - '${IP_ADDRESS}:8118:8118'
+      - '${IP_ADDRESS}:58846:58846'
+      - '${IP_ADDRESS}:58946:58946'
     restart: unless-stopped
 
   # RADARR: Movie Management
@@ -177,39 +115,21 @@ services:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - UMASK=${UMASK}
     volumes:
       - '${CONFIG_PATH}/radarr:/config'
       - '${MEDIA_BASE_PATH}/movies:/movies'
-      - '${NEW_MEDIA_PATH}:/downloads'
+      - '${TORRENT_COMPLETE_PATH}:/new'
       - '/etc/localtime:/etc/localtime:ro'
+    network_mode: "bridge"
     ports:
-      - '${RADARR_PORT}:7878'
+      - '${IP_ADDRESS}:${RADARR_PORT}:7878'
     restart: unless-stopped
 
-  # TAUTULLI: Monitoring Service for PLEX Usage
-  tautulli:
-    image: lscr.io/linuxserver/tautulli:latest
-    container_name: tautulli
-    logging:
-      driver: 'json-file'
-      options:
-        max-file: '${LOG_FILE_NUM}'
-        max-size: '${LOG_FILE_SIZE}'
-    environment:
-      - TZ=${TZ}
-      - PUID=${PUID}
-      - PGID=${PGID}
-    volumes:
-      - '${CONFIG_PATH}/tautulli:/config'
-      - '/etc/localtime:/etc/localtime:ro'
-    ports:
-      - '${TAUTULLI_PORT}:8181'
-    restart: unless-stopped
-
-  # ORGANIZR: Web Frontend for Management
-  organizr:
-    image: organizr/organizr
-    container_name: organizr
+  # SONARR: TV Series Management
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
     env_file: .env
     logging:
       driver: 'json-file'
@@ -220,8 +140,103 @@ services:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - UMASK=${UMASK}
     volumes:
+      - '${CONFIG_PATH}/sonarr:/config'
+      - '${MEDIA_BASE_PATH}/tv:/tv'
+      - '${TORRENT_COMPLETE_PATH}:/new'
       - '/etc/localtime:/etc/localtime:ro'
     ports:
-      - '${ORGANIZR_PORT}:80'
+      - '${SONARR_PORT}:8989'
     restart: unless-stopped
+  # # READARR: Book Management
+  # readarr:
+  #   container_name: readarr
+  #   image: lscr.io/linuxserver/readarr:develop
+  #   env_file: .env
+  #   environment:
+  #     - TZ=${TZ}
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #     - UMASK=${UMASK}
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-file: '${LOG_FILE_NUM}'
+  #       max-size: '${LOG_FILE_SIZE}'
+  #   volumes:
+  #     - '${CONFIG_PATH}/readarr:/config'
+  #     - '${MEDIA_BASE_PATH}/books:/books'
+  #     - '${TORRENT_COMPLETE_PATH}:/new'
+  #     - /etc/localtime:/etc/localtime:ro
+  #   ports:
+  #     - '${READARR_PORT}:8787'
+  #   restart: unless-stopped
+
+  # # CALIBRE: Book Interface
+  # calibre:
+  #   image: lscr.io/linuxserver/calibre:latest
+  #   container_name: calibre
+  #   security_opt:
+  #     - seccomp:unconfined #optional
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-file: '${LOG_FILE_NUM}'
+  #       max-size: '${LOG_FILE_SIZE}'
+  #   environment:
+  #     - TZ=${TZ}
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #     - UMASK=${UMASK}
+  #     - PASSWORD=${CALIBRE_AUTH_PASSWORD}
+  #   volumes:
+  #     - '${MEDIA_BASE_PATH}/books:/books'
+  #     - '${TORRENT_COMPLETE_PATH}:/new'
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #   ports:
+  #     - '${CALIBRE_HTTP_PORT}:8080'
+  #     - '${CALIBRE_HTTPS_PORT}:8181'
+  #     - '${CALIBRE_WEBSERVER_PORT}:8081'
+  #   restart: unless-stopped
+
+  # # TAUTULLI: Monitoring Service for PLEX Usage
+  # tautulli:
+  #   image: lscr.io/linuxserver/tautulli:latest
+  #   container_name: tautulli
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-file: '${LOG_FILE_NUM}'
+  #       max-size: '${LOG_FILE_SIZE}'
+  #   environment:
+  #     - TZ=${TZ}
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #   volumes:
+  #     - '${CONFIG_PATH}/tautulli:/config'
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #   ports:
+  #     - '${TAUTULLI_PORT}:8181'
+  #   restart: unless-stopped
+
+  # # ORGANIZR: Web Frontend for Management
+  # organizr:
+  #   image: organizr/organizr
+  #   container_name: organizr
+  #   env_file: .env
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-file: '${LOG_FILE_NUM}'
+  #       max-size: '${LOG_FILE_SIZE}'
+  #   environment:
+  #     - TZ=${TZ}
+  #     - PUID=${PUID}
+  #     - PGID=${PGID}
+  #   volumes:
+  #     - '${CONFIG_PATH}/organizr:/config'
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #   ports:
+  #     - '${ORGANIZR_PORT}:80'
+  #   restart: unless-stopped
