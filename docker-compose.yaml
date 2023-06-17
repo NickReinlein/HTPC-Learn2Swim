@@ -32,10 +32,10 @@ services:
     volumes:
       - '${CONFIG_PATH}/plex:/config'
       - '${TRANSCODE_PATH}/plex:/transcode'
-      - '${TORRENT_COMPLETE_PATH}:/new'
-      - '${MEDIA_BASE_PATH}/tv:/tv'
-      - '${MEDIA_BASE_PATH}/movies:/movies'
-      - '${MEDIA_BASE_PATH}/books:/books'
+      - '${TORRENT_INCOMPLETE_PATH}:/incomplete'
+      - '${MEDIA_TV_PATH}:/tv'
+      - '${MEDIA_MOVIES_PATH}:/movies'
+    network_mode: "bridge"
     ports:
       - '${PLEX_PORT}:32400'
       - 32410:32410/udp
@@ -73,8 +73,8 @@ services:
       - VPN_PROTOCOL=udp
       - VPN_DEVICE_TYPE=tun
       - VPN_PORT=${DELUGEVPN_VPN_PORT}
-      # - VPN_INPUT_PORTS=1234
-      # - VPN_OUTPUT_PORTS=5678
+      # - VPN_INPUT_PORTS=
+      # - VPN_OUTPUT_PORTS=
       - STRICT_PORT_FORWARD=no
       - ENABLE_PRIVOXY=no
       - STRONG_CERTS=no
@@ -88,10 +88,9 @@ services:
       - '${CONFIG_PATH}/delugevpn:/config'
       - '${TORRENT_BASE_PATH}:/data'
       - '${TORRENT_INCOMPLETE_PATH}:/incomplete'
-      - '${TORRENT_COMPLETE_PATH}:/complete'
       - '${TORRENT_FILE_PATH}:/torrents'
       - '/etc/localtime:/etc/localtime:ro'
-    # network_mode: "bridge"
+    network_mode: "bridge"
     cap_add:
       - NET_ADMIN
     ports:
@@ -118,9 +117,10 @@ services:
       - UMASK=${UMASK}
     volumes:
       - '${CONFIG_PATH}/radarr:/config'
-      - '${MEDIA_BASE_PATH}/movies:/movies'
-      - '${TORRENT_COMPLETE_PATH}:/new'
+      - '${MEDIA_MOVIES_PATH}:/movies'
+      - '${TORRENT_INCOMPLETE_PATH}:/new'
       - '/etc/localtime:/etc/localtime:ro'
+    network_mode: "bridge"
     ports:
       - '${RADARR_PORT}:7878'
     restart: unless-stopped
@@ -142,14 +142,38 @@ services:
       - UMASK=${UMASK}
     volumes:
       - '${CONFIG_PATH}/sonarr:/config'
-      - '${MEDIA_BASE_PATH}/tv:/tv'
-      - '${TORRENT_COMPLETE_PATH}:/new'
+      - '${TORRENT_INCOMPLETE_PATH}:/new'
+      - '${MEDIA_TV_PATH}:/tv'
       - '/etc/localtime:/etc/localtime:ro'
+    network_mode: "bridge"
     ports:
       - '${SONARR_PORT}:8989'
     restart: unless-stopped
-    ## These services mostly work but have been set aside
-    ## to finish the above 
+
+  # PROWLARR: Arr Management
+  prowlarr:
+    container_name: prowlarr
+    image: lscr.io/linuxserver/prowlarr:latest
+    env_file: .env
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=${UMASK}
+    logging:
+      driver: 'json-file'
+      options:
+        max-file: '${LOG_FILE_NUM}'
+        max-size: '${LOG_FILE_SIZE}'
+    volumes:
+      - '${CONFIG_PATH}/prowlarr:/config'
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: "bridge"
+    ports:
+      - '${PROWLARR_PORT}:9696'
+    restart: unless-stopped
+    # These services mostly work but have been set aside
+    # to finish the above 
     # # READARR: Book Management
     # readarr:
     #   container_name: readarr
