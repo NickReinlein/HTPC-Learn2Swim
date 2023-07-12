@@ -234,6 +234,28 @@ services:
       - '${TAUTULLI_PORT}:8181'
     restart: unless-stopped
 
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    logging:
+      driver: 'json-file'
+      options:
+        max-file: '${LOG_FILE_NUM}'
+        max-size: '${LOG_FILE_SIZE}'
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - '${CONFIG_PATH}/overseerr:/config'
+      - '/etc/localtime:/etc/localtime:ro'
+    networks:
+      network:
+        ipv4_address: 10.17.0.9
+    ports:
+      - '${OVERSEERR_PORT}:5055'
+    restart: unless-stopped
+
 networks:
   network:
     driver: bridge
