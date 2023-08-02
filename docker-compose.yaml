@@ -31,18 +31,18 @@ services:
       - VPN_USER=${VPNUNAME}
       - VPN_PASS=${VPNPASS}
       - VPN_PROV=${VPNPROVIDER}
-      - VPN_REMOTE=${VPN_REMOTE}
       - VPN_CLIENT=openvpn
       - VPN_PROTOCOL=udp
       - VPN_DEVICE_TYPE=tun
       - VPN_PORT=${DELUGEVPN_VPN_PORT}
       # - VPN_INPUT_PORTS=
       # - VPN_OUTPUT_PORTS=
+      - LAN_NETWORK=${CIDR_ADDRESS}
       - STRICT_PORT_FORWARD=no
       - ENABLE_PRIVOXY=no
       - STRONG_CERTS=no
-      - LAN_NETWORK=${CIDR_ADDRESS}networ
-      - NAME_SERVERS=84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40
+      - NAME_SERVERS=8.8.8.8,1.1.1.1
+      # - NAME_SERVERS=84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40
       - DEBUG=false
       - DELUGE_DAEMON_LOG_LEVEL=info
       - DELUGE_WEB_LOG_LEVEL=info
@@ -57,6 +57,8 @@ services:
     networks:
       network:
         ipv4_address: 10.17.0.2
+    devices:
+      - /dev/net/tun
     cap_add:
       - NET_ADMIN
     ports:
@@ -104,9 +106,8 @@ services:
       - 1900:1900
       - 5353:5353
       - 32469:32469
-    restart: unless-stopped
-
-  # PROWLARR: Arr management
+  
+  # PROWLARR: Arr container manager
   prowlarr:
     container_name: prowlarr
     image: lscr.io/linuxserver/prowlarr:latest
@@ -261,9 +262,9 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 10.17.0.0/16
+        - subnet: 10.17.0.2/24
           gateway: 10.17.0.1
-    # These services mostly work but have been set aside for now
+    # These services mostly work but have been de-prioritized for now
     # # READARR: Book Management
     # readarr:
     #   container_name: readarr
@@ -314,5 +315,3 @@ networks:
     #     - '${CALIBRE_HTTPS_PORT}:8181'
     #     - '${CALIBRE_WEBSERVER_PORT}:8081'
     #   restart: unless-stopped
-
-
