@@ -4,15 +4,12 @@
 ##                                      #
 #########################################
 
-version: '3.5'
+version: '3.7'
 
 networks:
-  network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.17.0.1/24
-          gateway: 10.17.0.1
+  default:
+    external: true
+    name: learn2swim
 
 services:
   # DELUGEVPN: Deluge torrent client + VPN
@@ -54,9 +51,6 @@ services:
       - '${CONFIG_PATH}/delugevpn:/config'
       - '${DATA_PATH}/torrents:/data/torrents'
       - '/etc/localtime:/etc/localtime:ro'
-    networks:
-      network:
-        ipv4_address: 10.17.0.2
     devices:
       - /dev/net/tun
     cap_add:
@@ -88,9 +82,6 @@ services:
     volumes:
       - '${CONFIG_PATH}/plex:/config'
       - '${DATA_PATH}/media:/data/media'
-    networks:
-      network:
-        ipv4_address: 10.17.0.3
     ports:
       - '${PLEX_PORT}:32400'
       - 32410:32410/udp
@@ -120,12 +111,9 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     volumes:
-      - '${CONFIG_PATH}/prowlarr:/config'
-      - '${DATA_PATH}:/data'
+      - ${CONFIG_PATH}/prowlarr:/config
+      - ${DATA_PATH}:/data
       - /etc/localtime:/etc/localtime:ro
-    networks:
-      network:
-        ipv4_address: 10.17.0.4
     ports:
       - '${PROWLARR_PORT}:9696'
     restart: unless-stopped
@@ -146,11 +134,9 @@ services:
       - PGID=${PGID}
       - UMASK=${UMASK}
     volumes:
-      - '${CONFIG_PATH}/radarr:/config'
-      - '${DATA_PATH}:/data'
-    networks:
-      network:
-        ipv4_address: 10.17.0.5
+      - ${CONFIG_PATH}/radarr:/config
+      - ${DATA_PATH}:/data
+      - ${DATA_PATH}/media/movies:/movies
     ports:
       - '${RADARR_PORT}:7878'
     restart: unless-stopped
@@ -171,11 +157,10 @@ services:
       - PGID=${PGID}
       - UMASK=${UMASK}
     volumes:
-      - '${CONFIG_PATH}/sonarr:/config'
-      - '${DATA_PATH}:/data'
-    networks:
-      network:
-        ipv4_address: 10.17.0.6
+      - ${CONFIG_PATH}/sonarr:/config
+      - ${DATA_PATH}:/data
+      - ${DATA_PATH}/media/tv:/tv
+      - ${DATA_PATH}/media/anime:/anime
     ports:
       - '${SONARR_PORT}:8989'
     restart: unless-stopped
@@ -191,15 +176,13 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     environment:
-      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
     volumes:
-      - '${CONFIG_PATH}/organizr:/config'
-      - '/etc/localtime:/etc/localtime:ro'
-    networks:
-      network:
-        ipv4_address: 10.17.0.7
+      - ${CONFIG_PATH}/organizr:/config
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - '${ORGANIZR_PORT}:80'
     restart: unless-stopped
@@ -214,15 +197,13 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     environment:
-      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
     volumes:
-      - '${CONFIG_PATH}/tautulli:/config'
-      - '/etc/localtime:/etc/localtime:ro'
-    networks:
-      network:
-        ipv4_address: 10.17.0.8
+      - ${CONFIG_PATH}/tautulli:/config
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - '${TAUTULLI_PORT}:8181'
     restart: unless-stopped
@@ -237,16 +218,14 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     environment:
-      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
     volumes:
-      - '${CONFIG_PATH}/overseerr:/config'
-      - '${DATA_PATH}:/data'
-      - '/etc/localtime:/etc/localtime:ro'
-    networks:
-      network:
-        ipv4_address: 10.17.0.9
+      - ${CONFIG_PATH}/overseerr:/config
+      - ${DATA_PATH}:/data
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - '${OVERSEERR_PORT}:5055'
     restart: unless-stopped
@@ -261,16 +240,15 @@ services:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
     environment:
-      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - '${CONFIG_PATH}/portainer:/data'
-      - '/etc/localtime:/etc/localtime:ro'
-    networks:
-      network:
-        ipv4_address: 10.17.0.10
+      - ${CONFIG_PATH}/portainer:/data
+      - /etc/localtime:/etc/localtime:ro
+    privileged: true
     ports:
       - 9000:9000
       - 9443:9443
@@ -282,22 +260,20 @@ services:
     image: golift/unpackerr
     container_name: unpackerr
     env_file: .env
-    # user: ${PUID}:${PGID}
     logging:
       driver: 'json-file'
       options:
         max-file: '${LOG_FILE_NUM}'
         max-size: '${LOG_FILE_SIZE}'
-    networks:
-      network:
-        ipv4_address: 10.17.0.11
     volumes:
-      - '${DATA_PATH}:/data'
-      - '/etc/localtime:/etc/localtime:ro'
+      - ${CONFIG_PATH}/unpackerr:/config
+      - ${DATA_PATH}:/data
+      - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
       - UN_DEBUG=false
       - UN_LOG_FILE=
       - UN_LOG_FILES=10
@@ -311,7 +287,7 @@ services:
       - UN_DIR_MODE=0755
       # Sonarr Config
       - UN_SONARR_0_URL=http://10.17.0.6:8989
-      - UN_SONARR_0_API_KEY=
+      - UN_SONARR_0_API_KEY=909a25bb95f44fb19797ba83a41aa468
       - UN_SONARR_0_PATHS_0=['/torrents/complete/tv','/torrents/complete/anime']
       - UN_SONARR_0_PROTOCOLS=torrent
       - UN_SONARR_0_TIMEOUT=10s
@@ -341,7 +317,7 @@ services:
       # - UN_READARR_0_TIMEOUT=10s
       # - UN_READARR_0_DELETE_ORIG=false
       # - UN_READARR_0_DELETE_DELAY=5m
-      # # Folder Config
+      # # Folder Config 
       # - UN_FOLDER_0_PATH=
       # - UN_FOLDER_0_EXTRACT_PATH=
       # - UN_FOLDER_0_DELETE_AFTER=10m
@@ -351,6 +327,29 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true    
+
+  nginx-proxy-manager:
+    image: jlesage/nginx-proxy-manager
+    container_name: nginx-proxy-manager
+    env_file: .env
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=${UMASK}
+    ports:
+      - "8181:8181"
+      - "8080:8080"
+      - "4443:4443"
+    volumes:
+      - ${DATA_PATH}:/data
+      - ${CONFIG_PATH}/nginx-proxy-manager:/config:rw
+      - ${CONFIG_PATH}/letsencrypt:/etc/letsencrypt
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/check-health"]
+      interval: 10s
+      timeout: 3s
+    restart: unless-stopped
 
     # These services mostly work but have been de-prioritized for now
     # # READARR: Book Management
